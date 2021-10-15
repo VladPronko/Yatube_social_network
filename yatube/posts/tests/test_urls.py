@@ -26,6 +26,7 @@ class URLTests(TestCase):
         cls.group_posts_url = f'/group/{cls.group.slug}/'
         cls.post_profile_url = f'/profile/{cls.user.username}/'
         cls.post_edit_url = f'/posts/{cls.post.id}/edit/'
+        cls.add_comment_url = f'/posts/{cls.post.id}/comment/'
 
         cls.public_urls = {
             '/': "posts/index.html",
@@ -110,3 +111,11 @@ class URLTests(TestCase):
             with self.subTest(field=address):
                 response = self.authorized_client.get(address, follow=True)
                 self.assertRedirects(response, self.post_profile_url)
+
+    # def test_add_comment_redirect(self):
+    #     """Проверяем редирект авторизованного пользователя на"""
+    #     """после добавления нового комментария"""
+    #     for address in URLTests.add_comment_url:
+    #         with self.subTest(field=address):
+    #             response = self.authorized_client.get(address, follow=True)
+    #             self.assertRedirects(response, self.post_id_url)

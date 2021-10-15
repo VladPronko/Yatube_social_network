@@ -6,31 +6,32 @@
     {% for field in form %}
       {% for error in field.errors %}            
         <div class="alert alert-danger">
-        {{ error|escape }}
+          {{ error|escape }}
         </div>
       {% endfor %}
     {% endfor %}
     {% for error in form.non_field_errors %}
       <div class="alert alert-danger">
-      {{ error|escape }}
+        {{ error|escape }}
       </div>
-      {% endfor %}
+    {% endfor %}
   {% endif %}
     <form method="post" enctype="multipart/form-data" {% if action_url %} action="{% url action_url %}" {% endif %}>
     {% csrf_token %}
-    {% for field in form %}<div class="form-group row my-3"
+    {% for field in form %}
+      <div class="form-group row my-3"
       {% if field.field.required %} 
         aria-required="true"
       {% else %}
         aria-required="false"
       {% endif %}
           >
-    <label for="{{ field.id_for_label }}">
-    {{ field.label }}
-    {% if field.field.required %}
-      <span class="required text-danger">*</span>
-    {% endif %}
-    </label>
+      <label for="{{ field.id_for_label }}">
+      {{ field.label }}
+      {% if field.field.required %}
+        <span class="required text-danger">*</span>
+      {% endif %}
+      </label>
     <div>
       {{ field|addclass:'form-control' }}
         {% if field.help_text %}
@@ -47,42 +48,4 @@
     </button>
     </div>
     </form>
-  {% endblock%}
-
-
-
-
-  {% comment %} <form method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  {% load user_filters %}
-  {% for field in form %}
-    <div class="form-group row y-3 p-3" aria-required={{ field.field.required }}>
-      <label
-        for="{{ field.id_for_label }}"
-        class="col-md-4 col-form-label text-md-right">
-        {{ field.label }}
-        {% if field.field.required %}
-          <span class="required">*</span>
-       {% endif %}
-      </label>
-      <div class="col-md-6">
-        {# подключаем фильтр и указываем класс #}
-        {{ field|addclass:"form-control" }}
-        {% if field.help_text %}
-          <small
-            id="{{ field.id_for_label }}-help"
-            class="form-text text-muted">
-            {{ field.help_text|safe }}
-          </small>
-        {% endif %}
-      </div>
-    </div>
-  {% endfor %}
-
-  <div class="col-md-6 offset-md-4">
-    <button type="submit" class="btn btn-primary">
-      {% if is_edit %}Редактировать{% else %}Добавить{% endif %}
-    </button>
-  </div>
-  </form>
-{% endblock content %} {% endcomment %}
+{% endblock%}

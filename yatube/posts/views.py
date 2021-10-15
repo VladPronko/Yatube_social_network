@@ -8,12 +8,16 @@ from .forms import CommentForm, PostForm
 from .models import Follow, Group, Post, User
 
 
+def paginator(request, posts):
+    pages = Paginator(posts, settings.MY_CONSTANTA)
+    page_number = request.GET.get('page')
+    return pages.get_page(page_number)
+
+
 @cache_page(20)
 def index(request):
     posts = Post.objects.all()
-    paginator = Paginator(posts, settings.MY_CONSTANTA)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator(request, posts)
     context = {
         'page_obj': page_obj,
     }
@@ -23,9 +27,7 @@ def index(request):
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
     posts = group.posts.all()
-    paginator = Paginator(posts, settings.MY_CONSTANTA)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator(request, posts)
     context = {
         'group': group,
         'page_obj': page_obj,
@@ -36,23 +38,18 @@ def group_posts(request, slug):
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     posts = author.posts.all()
-    paginator = Paginator(posts, settings.MY_CONSTANTA)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator(request, posts)
     user = request.user
     following = user.is_authenticated and author.following.exists()
     context = {
         'author': author,
         'page_obj': page_obj,
-        'paginator': paginator,
         'following': following,
     }
     return render(request, 'posts/profile.html', context)
 
 
 def post_detail(request, post_id):
-    if request.method == 'POST':
-        return add_comment(request, post_id)
     post = get_object_or_404(Post, pk=post_id)
     form = CommentForm(request.POST or None)
     comments = post.comments.all()
@@ -120,21 +117,17 @@ def follow_index(request):
     user = request.user
     authors = user.follower.values_list('author', flat=True)
     posts = Post.objects.filter(author__id__in=authors)
-
-    paginator = Paginator(posts, settings.MY_CONSTANTA)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    context = {
-        'page_obj': page_obj,
-    }
+    page_obj = paginator(request, posts)
+    context = {'page_obj': page_obj}
     return render(request, 'posts/follow.html', context)
 
 
 @login_required
 def profile_follow(request, username):
-    if request.user.username != username:
-        author = get_object_or_404(User, username=username)
-        Follow.objects.get_or_create(user=request.user, author=author)
+    author = get_object_or_404(User, username=username)
+    user = request.user
+    if author != user:
+        Follow.objects.get_or_create(user=user, author=author)
     return redirect('posts:profile', username)
 
 

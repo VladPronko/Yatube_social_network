@@ -9,7 +9,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from ..forms import PostForm
-from ..models import Group, Post
+from ..models import Comment, Group, Post
 
 User = get_user_model()
 
@@ -33,14 +33,21 @@ class PostFormTests(TestCase):
             text='text'
         )
         cls.form = PostForm()
+        small_gif = (b'\x47\x49\x46\x38\x39\x61\x02\x00'
+                     b'\x01\x00\x80\x00\x00\x00\x00\x00'
+                     b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+                     b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+                     b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+                     b'\x0A\x00\x3B')
+        cls.uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
 
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        # Модуль shutil - библиотека Python с удобными инструментами
-        # для управления файлами и директориями:
-        # создание,удаление,копирование,перемещение,изменение папок и файлов
-        # Метод shutil.rmtree удаляет директорию и всё её содержимое
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
@@ -50,21 +57,10 @@ class PostFormTests(TestCase):
 
     def test_create_post_with_image(self):
         posts_count = Post.objects.count()
-        small_gif = (b'\x47\x49\x46\x38\x39\x61\x02\x00'
-                     b'\x01\x00\x80\x00\x00\x00\x00\x00'
-                     b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-                     b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-                     b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-                     b'\x0A\x00\x3B')
-        uploaded = SimpleUploadedFile(
-            name='small.gif',
-            content=small_gif,
-            content_type='image/gif'
-        )
         form_data = {
             'text': self.post.text,
             'group': self.group.id,
-            'image': uploaded,
+            'image': self.uploaded,
         }
         response = self.authorized_client.post(
             reverse('posts:post_create'),
@@ -94,7 +90,6 @@ class PostFormTests(TestCase):
             follow=True
         )
         self.assertRedirects(
-            # response, '/auth/login/?next=/create/', HTTPStatus.FOUND)
             response, reverse(
                 'users:login') + '?next=' + reverse(
                     'posts:post_create'), HTTPStatus.FOUND)
@@ -132,3 +127,27 @@ class PostFormTests(TestCase):
         self.assertEqual(post.author, self.post.author)
         self.assertEqual(post.group, self.post.group)
         self.assertEqual(post.image, 'posts/small2.gif')
+
+    def test_comment_create(self):
+        count = Comment.objects.count()
+        form_data = {'text': self.post.text}
+        response = self.authorized_client.post(
+            reverse('posts:add_comment', kwargs={'post_id': self.post.pk}),
+            data=form_data, follow=True)
+        self.assertRedirects(response, reverse(
+            'posts:post_detail', kwargs={'post_id': self.post.pk}))
+        self.assertEqual(Comment.objects.count(), count + 1)
+        self.assertTrue(Comment.objects.filter(post=self.post.pk,
+                                               author=self.user,
+                                               text=self.post.text))
+
+    def test_cannot_create_comment_by_unauth(self):
+        count = Comment.objects.count()
+        form_data = {'text': self.post.text}
+        response = self.unauthorized_client.post(
+            reverse('posts:add_comment', kwargs={'post_id': self.post.pk}),
+            data=form_data, follow=True)
+        self.assertEqual(Comment.objects.count(), count)
+        self.assertRedirects(
+            response, reverse('users:login') + '?next=' + reverse(
+                'posts:add_comment', kwargs={'post_id': self.post.pk}))

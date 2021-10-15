@@ -47,14 +47,21 @@ class PostsPagesTests(TestCase):
             reverse('posts:profile', kwargs={
                 'username': PostsPagesTests.user.username}),
         )
+        small_gif = (b'\x47\x49\x46\x38\x39\x61\x02\x00'
+                     b'\x01\x00\x80\x00\x00\x00\x00\x00'
+                     b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+                     b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+                     b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+                     b'\x0A\x00\x3B')
+        cls.uploaded = SimpleUploadedFile(
+            name='small2.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
 
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        # Модуль shutil - библиотека Python с удобными инструментами
-        # для управления файлами и директориями:
-        # создание, удаление, копирование, перемещение,изменение папок и файлов
-        # Метод shutil.rmtree удаляет директорию и всё её содержимое
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
@@ -134,22 +141,11 @@ class PostsPagesTests(TestCase):
             self.assertEqual(len(response.context['page_obj']), 10)
 
     def test_context_with_image(self):
-        small_gif = (b'\x47\x49\x46\x38\x39\x61\x02\x00'
-                     b'\x01\x00\x80\x00\x00\x00\x00\x00'
-                     b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-                     b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-                     b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-                     b'\x0A\x00\x3B')
-        uploaded = SimpleUploadedFile(
-            name='small2.gif',
-            content=small_gif,
-            content_type='image/gif'
-        )
         post = Post.objects.create(
             author=self.user,
             text='Тестовый текст',
             group=self.group,
-            image=uploaded
+            image=self.uploaded
         )
         for url in self.urls_with_paginator:
             with self.subTest(url=url):
@@ -160,8 +156,8 @@ class PostsPagesTests(TestCase):
                 self.assertEqual(first_object.group, post.group)
                 self.assertEqual(first_object.image, post.image)
 
-    def test_caсhe(self):
-        response = self.authorized_client.get('/').content
+    def test_cache(self):
+        response = self.authorized_client.get(reverse('posts:index')).content
         Post.objects.create(
             author=self.user,
             text='Тестовый текст',
@@ -187,11 +183,16 @@ class PostsPagesTests(TestCase):
 
     def test_follow(self):
         follow_count = Follow.objects.count()
-        Follow.objects.create(author=self.user, user=self.user2)
+        self.authorized_client2.get(reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.user}), follow=True)
         self.assertEqual(follow_count + 1, Follow.objects.count())
+        self.assertTrue(Follow.objects.filter(
+            user=self.user2, author=self.user))
 
     def test_unfollow(self):
         Follow.objects.create(author=self.user, user=self.user2)
         follow_count = Follow.objects.count()
-        self.authorized_client2.get(f'/profile/{self.user.username}/unfollow/')
+        self.authorized_client2.get(reverse(
+            'posts:profile_unfollow', kwargs={'username': self.user.username}))
         self.assertEqual(follow_count - 1, Follow.objects.count())
