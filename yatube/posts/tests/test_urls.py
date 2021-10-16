@@ -111,11 +111,3 @@ class URLTests(TestCase):
             with self.subTest(field=address):
                 response = self.authorized_client.get(address, follow=True)
                 self.assertRedirects(response, self.post_profile_url)
-
-    # def test_add_comment_redirect(self):
-    #     """Проверяем редирект авторизованного пользователя на"""
-    #     """после добавления нового комментария"""
-    #     for address in URLTests.add_comment_url:
-    #         with self.subTest(field=address):
-    #             response = self.authorized_client.get(address, follow=True)
-    #             self.assertRedirects(response, self.post_id_url)

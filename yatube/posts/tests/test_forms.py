@@ -44,6 +44,11 @@ class PostFormTests(TestCase):
             content=small_gif,
             content_type='image/gif'
         )
+        cls.uploaded2 = SimpleUploadedFile(
+            name='small2.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -96,21 +101,10 @@ class PostFormTests(TestCase):
         self.assertEqual(Post.objects.count(), posts_count)
 
     def test_post_edit(self):
-        small_gif = (b'\x47\x49\x46\x38\x39\x61\x02\x00'
-                     b'\x01\x00\x80\x00\x00\x00\x00\x00'
-                     b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-                     b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-                     b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-                     b'\x0A\x00\x3B')
-        uploaded = SimpleUploadedFile(
-            name='small2.gif',
-            content=small_gif,
-            content_type='image/gif'
-        )
         form_data = {
             'text': self.post.text,
             'group': self.group.id,
-            'image': uploaded,
+            'image': self.uploaded2,
         }
         response = self.authorized_client.post(
             reverse('posts:post_edit', kwargs={'post_id': self.post.pk}),

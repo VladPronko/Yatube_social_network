@@ -162,9 +162,11 @@ class PostsPagesTests(TestCase):
             author=self.user,
             text='Тестовый текст',
         )
-        self.assertEqual(response, self.authorized_client.get('/').content)
+        self.assertEqual(response, self.authorized_client.get(
+            reverse('posts:index')).content)
         cache.clear()
-        self.assertNotEqual(response, self.authorized_client.get('/').content)
+        self.assertNotEqual(response, self.authorized_client.get(
+            reverse('posts:index')).content)
 
     def test_follower_can_get_post(self):
         Follow.objects.create(author=self.user, user=self.user2)
