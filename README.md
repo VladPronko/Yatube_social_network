@@ -1,3 +1,43 @@
-# hw05_final
+# Социальная сеть Yatube (учебный проект Яндекс.Практикум)
 
-[![CI](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml)
+### Описание
+Сайт позволяет вести свой личный блог.
+
+### Возможности
+- Создание постов
+- Подписка на авторов
+- Подписка на группы
+- Комментирование постов
+
+### Технологии
+- Python 3
+- Django
+
+### Начало работы
+
+1. Склонируйте проект:
+
+```git clone https://github.com/VladPronko/hw05_final.git```  
+
+2. Создайте и активируйте виртуальное окружение:
+
+```python -m venv venv```
+```source venv/bin/activate ```
+
+3. Установите зависимости из файла requirements.txt
+
+```pip install -r requirements.txt```
+
+4. Запустите миграции:
+
+```python manage.py migrate```
+
+5. Создайте своего суперпользователя:
+
+```python manage.py createsuperuser```
+
+6. Сайт будет доступен по адресу:
+ 
+```http://127.0.0.1:8000```
+
+
